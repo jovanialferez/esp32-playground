@@ -24,6 +24,30 @@ Wi‑Fi–connected clock that syncs time via NTP and displays the device IP and
 
 **Wiring**
 
+```mermaid
+flowchart LR
+  subgraph esp["ESP32"]
+    direction TB
+    e_gnd[GND]
+    e_vcc[3.3V / 5V]
+    e_sda[GPIO 21 · SDA]
+    e_scl[GPIO 22 · SCL]
+  end
+
+  subgraph lcd["I2C LCD (PCF8574)"]
+    direction TB
+    l_gnd[GND]
+    l_vcc[VCC]
+    l_sda[SDA]
+    l_scl[SCL]
+  end
+
+  e_gnd --- l_gnd
+  e_vcc --- l_vcc
+  e_sda --- l_sda
+  e_scl --- l_scl
+```
+
 | LCD (PCF8574) | ESP32  |
 |---------------|--------|
 | GND           | GND    |
