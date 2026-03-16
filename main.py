@@ -1,3 +1,3 @@
-import clock
+import irrigation
 
-clock.run()
+irrigation.run()

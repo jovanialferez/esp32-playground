@@ -4,6 +4,10 @@ A collection of hobby projects and experiments with the ESP32, written in MicroP
 
 ---
 
+## Setting up the Thonny ide
+1. Install micropython interpreter for esp32. Go to Tools -> Options -> Interpreter
+2. Select the right port for your device
+
 ## Projects
 
 ### 1. I2C LCD Clock
