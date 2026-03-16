@@ -1,12 +1,22 @@
 from machine import ADC, Pin
 import utime
+import lcd as _lcd
 
 # How dry the soil needs to be before we water it.
 # ADC reads 0 (wet) to 4095 (dry). Higher number = drier soil.
 DRY_THRESHOLD = 2200
 
 # Max seconds a pump can run in one go — prevents flooding if a sensor breaks.
-MAX_SAFETY_TIME = 10
+MAX_SAFETY_TIME = 5
+
+
+def lcd_show(row0, row1):
+    # Helper to update both LCD rows at once. Pads to 16 chars to clear leftover text.
+    _lcd.lcd.move_to(0, 0)
+    _lcd.lcd.putstr("{:<16}".format(row0))
+    _lcd.lcd.move_to(0, 1)
+    _lcd.lcd.putstr("{:<16}".format(row1))
+
 
 def run():
     # Set up 4 soil moisture sensors on pins 32, 33, 34, 35.
@@ -21,6 +31,7 @@ def run():
     pumps = [Pin(p, Pin.OUT, value=1) for p in [26, 27, 14, 12]]
 
     print("System Online: Continuous Feedback Mode")
+    lcd_show("Irrigation", "System Online")
 
     try:
         while True:
@@ -30,6 +41,7 @@ def run():
 
                 if moisture > DRY_THRESHOLD:  # Soil is too dry — needs water
                     print("Plant {} is DRY ({}). Watering...".format(i + 1, moisture))
+                    lcd_show("Plant {}: DRY".format(i + 1), "Val:{} Water!".format(moisture))
                     start_time = utime.time()  # Record when we started pumping
 
                     # Keep watering until soil is moist enough OR time limit is hit
@@ -40,20 +52,27 @@ def run():
                         # Safety check: stop pump if it's been running too long
                         if (utime.time() - start_time) > MAX_SAFETY_TIME:
                             print("!! SAFETY TIMEOUT on Plant {} !!".format(i + 1))
+                            lcd_show("Plant {}: TIMEOUT".format(i + 1), "!! Check sensor!")
                             break
 
                     pumps[i].value(1)  # Turn pump OFF
                     print("Plant {} reached threshold. Pump stopped.".format(i + 1))
+                    lcd_show("Plant {}: Done".format(i + 1), "Pump stopped")
+                    utime.sleep(2)
 
                 else:
                     # Soil moisture is fine, no action needed
                     print("Plant {}: OK ({})".format(i + 1, moisture))
+                    lcd_show("Plant {}: OK".format(i + 1), "Val:{}".format(moisture))
+                    utime.sleep(2)
 
             print("--- All plants checked. Waiting 5s ---")
+            lcd_show("All checked.", "Next in 5s...")
             utime.sleep(5)  # Wait 5 seconds before checking all plants again
 
     except KeyboardInterrupt:
         # If the user presses Ctrl+C, make sure all pumps are turned OFF safely
         for p in pumps:
             p.value(1)
+        lcd_show("Emergency Stop", "All pumps OFF")
         print("Emergency Stop.")
